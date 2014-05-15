@@ -1,0 +1,22 @@
+# Build and Release Folders
+bin-release/
+bin-debug/
+out/
+
+# Project property files
+.actionScriptProperties
+.flexProperties
+.settings/
+.project
+
+# IntelliJ IDEA project
+.idea/
+*.iml
+
+# Eclipse setting files
+.settings
+.buildpath
+.project
+
+# Quick Time video files
+*.mov
