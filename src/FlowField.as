@@ -19,15 +19,16 @@ package
 		private var greyScale:Boolean = true;
 		private var offsets:Array = [];
 		private var speeds:Array = [];
+		private var externalForce:Point;
 
 		private var bitmapData:BitmapData;
 		private var bitmap:Bitmap;
 
 		private var pointerData:BitmapData;
 		private var pointer:Bitmap;
-//		private var numCols:int = 40;
-//		private var numRows:int = 20;
-//		private var pointerArray:Array = [];
+		private var numCols:int = 40;
+		private var numRows:int = 20;
+		private var pointerArray:Array = [];
 
 		private var canMove:Boolean = false;
 
@@ -37,7 +38,7 @@ package
 			bitmap = new Bitmap(bitmapData);
 			addChild(bitmap);
 
-			randomSeed = randomNumFromRange(1, 123456);
+			randomSeed = randomNumFromRange(1, 999999);
 
 			//Populate offsets and speeds array
 			for(var i:int = 0; i < numOctaves; i++)
@@ -46,26 +47,21 @@ package
 				speeds[i] = new Point(randomNumFromRange(-2, 2), randomNumFromRange(-0.5, 0.5))
 			}
 
-//			for(var i:int = 0; i <= numCols; i++)
-//			{
-//				for(var j:int = 0; j <= numRows; j++)
-//				{
-//					pointerData = new BitmapData(6, 1, false, 0xFF2200);
-//					pointer = new Bitmap(pointerData);
-//					pointer.x = (bitmap.width / numCols) * i;
-//					pointer.y = (bitmap.height / numRows) * j;
-//
-//					pointerArray.push(pointer)
-//					addChild(pointer);
-//				}
-//			}
+			for(var i:int = 0; i <= numCols; i++)
+			{
+				for(var j:int = 0; j <= numRows; j++)
+				{
+					pointerData = new BitmapData(6, 1, false, 0xFF2200);
+					pointer = new Bitmap(pointerData);
+					pointer.x = (bitmap.width / numCols) * i;
+					pointer.y = (bitmap.height / numRows) * j;
 
-			pointerData = new BitmapData(6, 1, false, 0xFF2200);
-			pointer = new Bitmap(pointerData);
-			pointer.x = (bitmap.width - pointer.width) / 2;
-			pointer.y = (bitmap.height - pointer.height) / 2;
+					pointerArray.push(pointer)
+					addChild(pointer);
+				}
+			}
 
-			addChild(pointer);
+			externalForce = new Point(-1, 0);
 
 			addEventListener(Event.ENTER_FRAME, onEnterFrame);
 			stage.addEventListener(MouseEvent.CLICK, onMouseClick)
@@ -84,58 +80,22 @@ package
 				offsets[i].y += speeds[i].y;
 			}
 
-			var currentDarkestX:int = -1;
-			var currentDarkestY:int = -1;
-			var currentBrightness:Number = -1;
-
-			for(var i:int = pointer.x - 1; i <= pointer.x + 1; i++)
+			for each(var agent in pointerArray)
 			{
-				for(var j:int = pointer.y - 1; j <= pointer.y + 1; j++)
+				var pixel:uint = bitmapData.getPixel(agent.x,  agent.y);
+				var brightness:Number = pixel / 0xFFFFFF;
+
+				if(canMove)
 				{
-					var pixel:uint = bitmapData.getPixel(i, j);
-					var brightness:Number = pixel / 0xFFFFFF;
+					var speed:Number = brightness * 5;
+					var angle:Number = brightness * 360 * Math.PI / 180;
 
-					if(currentBrightness == -1)
-					{
-						currentDarkestX = i;
-						currentDarkestY = j;
-						currentBrightness = brightness;
-					}
-
-					if(currentBrightness < brightness)
-					{
-						currentDarkestX = i;
-						currentDarkestY = j;
-						currentBrightness = brightness;
-					}
+					agent.x += (Math.cos(angle) * speed) + externalForce.x;
+					agent.y += (Math.sin(angle) * speed) + externalForce.y;
 				}
+
+				agent.rotation = brightness * 360;
 			}
-
-			var dx:Number = pointer.x - currentDarkestX;
-			var dy:Number = pointer.y - currentDarkestY;
-
-			var angle = -Math.atan2(dy, dx) / Math.PI * 180;
-			pointer.x += Math.cos(angle) * (currentBrightness * 5);
-			pointer.y += Math.sin(angle) * (currentBrightness * 5);
-			pointer.rotation = angle;
-
-//			for each(var agent in pointerArray)
-//			{
-//
-//				var pixel:uint = bitmapData.getPixel(agent.x,  agent.y);
-//				var brightness:Number = pixel / 0xFFFFFF;
-//
-//				if(canMove)
-//				{
-//					var speed:Number = brightness * 5;
-//					var angle:Number = brightness * 360 * Math.PI / 180;
-//
-//					agent.x += Math.cos(angle) * speed;
-//					agent.y += Math.sin(angle) * speed;
-//				}
-//
-//				agent.rotation = brightness * 360;
-//			}
 
 			bitmapData.perlinNoise(baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, greyScale, offsets);
 		}
